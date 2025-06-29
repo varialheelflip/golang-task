@@ -9,18 +9,46 @@ import (
 
 type User struct {
 	gorm.Model
-	Posts []Post
+	PostCount uint
+	Posts     []Post
 }
 
 type Post struct {
 	gorm.Model
-	UserID   uint
-	Comments []Comment
+	UserID        uint
+	CommentCount  uint
+	CommentStatus string
+	Comments      []Comment
+}
+
+func (p *Post) AfterCreate(tx *gorm.DB) (err error) {
+	userID := p.UserID
+	// 查询用户文章数量
+	var count int64
+	tx.Model(&Post{}).Where("user_id = ?", userID).Count(&count)
+	// 更新用户文章数量
+	err = tx.Model(&User{Model: gorm.Model{ID: userID}}).Updates(&User{PostCount: uint(count)}).Error
+	return err
 }
 
 type Comment struct {
 	gorm.Model
 	PostID uint
+}
+
+func (c *Comment) AfterDelete(tx *gorm.DB) (err error) {
+	tx.Unscoped().Select("PostID").First(&c, c.ID)
+	postID := c.PostID
+	// 查询文章评论数量
+	var count int64
+	tx.Model(&Comment{}).Where("post_id = ?", postID).Count(&count)
+	// 更新文章评论信息
+	var updatePost = Post{CommentCount: uint(count)}
+	if count == 0 {
+		updatePost.CommentStatus = "无评论"
+	}
+	err = tx.Model(&Post{Model: gorm.Model{ID: postID}}).Updates(updatePost).Error
+	return err
 }
 
 func createTable(db *gorm.DB) {
@@ -70,10 +98,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	db = db.Debug()
 	// 题目1
-	//createTable(db)
+	createTable(db)
 	// 题目2-1
-	//findUserInfo(db)
+	findUserInfo(db)
 	// 题目2-2
 	findMaxCommentPost(db)
+	// 题目3
+	db.Create(&Post{CommentStatus: "无评论", UserID: 1})
+	db.Delete(&Comment{Model: gorm.Model{ID: 3}})
 }
