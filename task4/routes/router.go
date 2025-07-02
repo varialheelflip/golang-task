@@ -15,4 +15,13 @@ func RegisterRoutes(r *gin.Engine) {
 			user.POST("/login", controllers.Login)
 		}
 	}
+
+	{
+		post := api.Group("/posts")
+		{
+			post.POST("", controllers.Create)
+			post.PUT("", controllers.Update)
+			post.DELETE("/:id", controllers.Delete)
+		}
+	}
 }

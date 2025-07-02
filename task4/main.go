@@ -2,6 +2,7 @@ package main
 
 import (
 	"blog_system/db"
+	"blog_system/middleWare"
 	"blog_system/routes"
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +13,7 @@ func main() {
 	defer db.CloseDB()
 
 	r := gin.Default()
+	r.Use(middleWare.AuthMiddleware())
 	routes.RegisterRoutes(r)
 	r.Run(":8080")
 }
