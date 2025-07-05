@@ -20,6 +20,8 @@ func RegisterRoutes(r *gin.Engine) {
 		post := api.Group("/posts")
 		{
 			post.POST("", controllers.Create)
+			post.GET("/:id", controllers.Detail)
+			post.GET("/page", controllers.Page)
 			post.PUT("", controllers.Update)
 			post.DELETE("/:id", controllers.Delete)
 		}

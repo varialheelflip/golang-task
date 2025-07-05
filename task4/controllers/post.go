@@ -8,6 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type pageVo struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+	UserID  uint   `json:"userId"`
+}
+
 func Create(c *gin.Context) {
 	var post models.Post
 	if err := c.ShouldBindJSON(&post); err != nil {
@@ -26,7 +32,59 @@ func Create(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// todo 文章列表查询, 支持分页
+func Page(c *gin.Context) {
+	var postQueryDto struct {
+		PageNo   uint `form:"pageNo"`
+		PageSize uint `form:"pageSize"`
+		UserID   uint `form:"userId"`
+	}
+	if err := c.ShouldBindQuery(&postQueryDto); err != nil {
+		response.BadRequest(c, "Invalid Query Param")
+		return
+	}
+
+	limit := postQueryDto.PageSize
+	offset := postQueryDto.PageSize * (postQueryDto.PageNo - 1)
+	tx := db.DB.Model(models.Post{})
+	if postQueryDto.UserID != 0 {
+		tx.Where("user_id = ?", postQueryDto.UserID)
+	}
+
+	var total int64
+	tx.Count(&total)
+	var posts []models.Post
+	tx.Offset(int(offset)).Limit(int(limit)).Find(&posts)
+
+	result := buildPostPageVO(posts)
+	response.Success(c, struct {
+		Total int64    `json:"total"`
+		Data  []pageVo `json:"data"`
+	}{
+		Total: total,
+		Data:  result,
+	})
+}
+
+func buildPostPageVO(postList []models.Post) (voList []pageVo) {
+	for _, val := range postList {
+		voList = append(voList, pageVo{
+			Title:   val.Title,
+			Content: val.Content,
+			UserID:  val.UserID,
+		})
+	}
+	return
+}
+
+func Detail(c *gin.Context) {
+	id := c.Param("id")
+	post := models.Post{}
+	if err := db.DB.First(&post, id).Error; err != nil {
+		response.ServerError(c, "文章不存在!")
+		return
+	}
+	response.Success(c, pageVo{Title: post.Title, Content: post.Content, UserID: post.UserID})
+}
 
 func Update(c *gin.Context) {
 	var newPost models.Post
