@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-func Register(c *gin.Context) {
+type UserController struct{}
+
+func (u *UserController) Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		response.BadRequest(c, err.Error())
@@ -33,7 +35,7 @@ func Register(c *gin.Context) {
 	response.Success(c, "User registered successfully")
 }
 
-func Login(c *gin.Context) {
+func (u *UserController) Login(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		response.BadRequest(c, err.Error())

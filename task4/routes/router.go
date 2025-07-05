@@ -11,19 +11,30 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		user := api.Group("/users")
 		{
-			user.POST("/register", controllers.Register)
-			user.POST("/login", controllers.Login)
+			var userController = controllers.UserController{}
+			user.POST("/register", userController.Register)
+			user.POST("/login", userController.Login)
 		}
 	}
 
 	{
 		post := api.Group("/posts")
 		{
-			post.POST("", controllers.Create)
-			post.GET("/:id", controllers.Detail)
-			post.GET("/page", controllers.Page)
-			post.PUT("", controllers.Update)
-			post.DELETE("/:id", controllers.Delete)
+			var postController = controllers.PostController{}
+			post.POST("", postController.Create)
+			post.GET("/:id", postController.Detail)
+			post.GET("/page", postController.Page)
+			post.PUT("", postController.Update)
+			post.DELETE("/:id", postController.Delete)
+		}
+	}
+
+	{
+		post := api.Group("/comments")
+		{
+			var commentController = controllers.CommentController{}
+			post.POST("", commentController.Create)
+			post.GET("/:postId", commentController.List)
 		}
 	}
 }

@@ -8,13 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type PostController struct{}
+
 type pageVo struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 	UserID  uint   `json:"userId"`
 }
 
-func Create(c *gin.Context) {
+func (p *PostController) Create(c *gin.Context) {
 	var post models.Post
 	if err := c.ShouldBindJSON(&post); err != nil {
 		response.BadRequest(c, err.Error())
@@ -32,7 +34,7 @@ func Create(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-func Page(c *gin.Context) {
+func (p *PostController) Page(c *gin.Context) {
 	var postQueryDto struct {
 		PageNo   uint `form:"pageNo"`
 		PageSize uint `form:"pageSize"`
@@ -76,7 +78,7 @@ func buildPostPageVO(postList []models.Post) (voList []pageVo) {
 	return
 }
 
-func Detail(c *gin.Context) {
+func (p *PostController) Detail(c *gin.Context) {
 	id := c.Param("id")
 	post := models.Post{}
 	if err := db.DB.First(&post, id).Error; err != nil {
@@ -86,7 +88,7 @@ func Detail(c *gin.Context) {
 	response.Success(c, pageVo{Title: post.Title, Content: post.Content, UserID: post.UserID})
 }
 
-func Update(c *gin.Context) {
+func (p *PostController) Update(c *gin.Context) {
 	var newPost models.Post
 	if err := c.ShouldBindJSON(&newPost); err != nil {
 		response.BadRequest(c, err.Error())
@@ -107,7 +109,7 @@ func Update(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-func Delete(c *gin.Context) {
+func (p *PostController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	post := models.Post{}
 	if err := db.DB.First(&post, id).Error; err != nil {
