@@ -19,29 +19,25 @@ type pageVo struct {
 func (p *PostController) Create(c *gin.Context) {
 	var post models.Post
 	if err := c.ShouldBindJSON(&post); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-	if !util.StrNotBlank(post.Title) || !util.StrNotBlank(post.Content) {
-		response.BadRequest(c, "文章标题和内容不能为空!")
+		response.Fail(c, err.Error())
 		return
 	}
 	post.UserID = util.GetHeaderUserId(c)
 	if err := db.DB.Create(&post).Error; err != nil {
-		response.ServerError(c, "Failed to create user")
+		response.Fail(c, "Failed to create post")
 		return
 	}
-	response.Success(c, nil)
+	response.Success(c, post.ID)
 }
 
 func (p *PostController) Page(c *gin.Context) {
 	var postQueryDto struct {
-		PageNo   uint `form:"pageNo"`
-		PageSize uint `form:"pageSize"`
+		PageNo   uint `form:"pageNo" binding:"required,min=1"`
+		PageSize uint `form:"pageSize" binding:"required,min=1,max=50"`
 		UserID   uint `form:"userId"`
 	}
 	if err := c.ShouldBindQuery(&postQueryDto); err != nil {
-		response.BadRequest(c, "Invalid Query Param")
+		response.Fail(c, "Invalid Query Param")
 		return
 	}
 
@@ -82,7 +78,7 @@ func (p *PostController) Detail(c *gin.Context) {
 	id := c.Param("id")
 	post := models.Post{}
 	if err := db.DB.First(&post, id).Error; err != nil {
-		response.ServerError(c, "文章不存在!")
+		response.Fail(c, "文章不存在!")
 		return
 	}
 	response.Success(c, pageVo{Title: post.Title, Content: post.Content, UserID: post.UserID})
@@ -91,36 +87,40 @@ func (p *PostController) Detail(c *gin.Context) {
 func (p *PostController) Update(c *gin.Context) {
 	var newPost models.Post
 	if err := c.ShouldBindJSON(&newPost); err != nil {
-		response.BadRequest(c, err.Error())
+		response.Fail(c, err.Error())
+		return
+	}
+	if newPost.ID == 0 {
+		response.Fail(c, "找不到文章!")
 		return
 	}
 	var oldPost models.Post
 	if err := db.DB.First(&oldPost, newPost.ID).Error; err != nil {
-		response.ServerError(c, "文章不存在!")
+		response.Fail(c, "找不到文章!")
 		return
 	}
 	userId := util.GetHeaderUserId(c)
 	if oldPost.UserID != userId {
-		response.BadRequest(c, "只有文章的作者才能更新自己的文章!")
+		response.Fail(c, "只有文章的作者才能更新自己的文章!")
 		return
 	}
 	newPost.UserID = userId
 	db.DB.Model(&newPost).Updates(models.Post{Title: newPost.Title, Content: newPost.Content})
-	response.Success(c, nil)
+	response.Success(c, newPost.ID)
 }
 
 func (p *PostController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	post := models.Post{}
 	if err := db.DB.First(&post, id).Error; err != nil {
-		response.ServerError(c, "文章不存在!")
+		response.Fail(c, "文章不存在!")
 		return
 	}
 	userId := util.GetHeaderUserId(c)
 	if post.UserID != userId {
-		response.BadRequest(c, "只有文章的作者才能删除自己的文章!")
+		response.Fail(c, "只有文章的作者才能删除自己的文章!")
 		return
 	}
 	db.DB.Delete(&models.Post{}, id)
-	response.Success(c, nil)
+	response.Success(c, id)
 }

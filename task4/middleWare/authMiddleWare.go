@@ -17,7 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("token")
 		if authHeader == "" {
 			c.Abort()
-			response.BadRequest(c, "请先登录!")
+			response.Fail(c, "请先登录!")
 			return
 		}
 		token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
@@ -26,7 +26,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			c.Abort()
-			response.BadRequest(c, "无效的token")
+			response.Fail(c, "无效的token")
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {

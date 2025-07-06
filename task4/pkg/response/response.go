@@ -18,10 +18,6 @@ func Success(c *gin.Context, data interface{}) {
 	Response(c, http.StatusOK, "success", data)
 }
 
-func BadRequest(c *gin.Context, message string) {
-	Response(c, http.StatusBadRequest, message, nil)
-}
-
-func ServerError(c *gin.Context, message string) {
+func Fail(c *gin.Context, message string) {
 	Response(c, http.StatusInternalServerError, message, nil)
 }

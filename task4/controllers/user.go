@@ -16,42 +16,45 @@ type UserController struct{}
 func (u *UserController) Register(c *gin.Context) {
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		response.BadRequest(c, err.Error())
+		response.Fail(c, err.Error())
 		return
 	}
-	// todo 参数校验 用户/邮箱已存在校验
+	// todo 用户/邮箱已存在校验
 	// 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		response.ServerError(c, "Failed to hash password")
+		response.Fail(c, "Failed to hash password")
 		return
 	}
 	user.Password = string(hashedPassword)
 
 	if err := db.DB.Create(&user).Error; err != nil {
-		response.ServerError(c, "Failed to create user")
+		response.Fail(c, "Failed to create user")
 		return
 	}
 
-	response.Success(c, "User registered successfully")
+	response.Success(c, user.ID)
 }
 
 func (u *UserController) Login(c *gin.Context) {
-	var user models.User
+	var user struct {
+		Username string `json:"username" binding:"required,max=20"`
+		Password string `json:"password" binding:"required,max=20"`
+	}
 	if err := c.ShouldBindJSON(&user); err != nil {
-		response.BadRequest(c, err.Error())
+		response.Fail(c, err.Error())
 		return
 	}
 
 	var storedUser models.User
 	if err := db.DB.Where("username = ?", user.Username).First(&storedUser).Error; err != nil {
-		response.BadRequest(c, "Invalid username or password")
+		response.Fail(c, "Invalid username or password")
 		return
 	}
 
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password)); err != nil {
-		response.BadRequest(c, "Invalid username or password")
+		response.Fail(c, "Invalid username or password")
 		return
 	}
 
@@ -64,7 +67,7 @@ func (u *UserController) Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(config.GlobalConfig.JWT.SecretKey))
 	if err != nil {
-		response.ServerError(c, "Failed to generate token")
+		response.Fail(c, "Failed to generate token")
 		return
 	}
 	response.Success(c, tokenString)
