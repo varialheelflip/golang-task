@@ -1,6 +1,7 @@
 package middleWare
 
 import (
+	"blog_system/config"
 	"blog_system/pkg/response"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -20,8 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
-			// todo 配置化
-			return []byte("your_secret_key"), nil
+			return []byte(config.GlobalConfig.JWT.SecretKey), nil
 		})
 
 		if err != nil || !token.Valid {

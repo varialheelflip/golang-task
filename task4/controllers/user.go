@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"blog_system/config"
 	"blog_system/db"
 	"blog_system/models"
 	"blog_system/pkg/response"
@@ -61,8 +62,7 @@ func (u *UserController) Login(c *gin.Context) {
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	// todo 密钥配置化
-	tokenString, err := token.SignedString([]byte("your_secret_key"))
+	tokenString, err := token.SignedString([]byte(config.GlobalConfig.JWT.SecretKey))
 	if err != nil {
 		response.ServerError(c, "Failed to generate token")
 		return

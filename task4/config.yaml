@@ -1,0 +1,13 @@
+app:
+  port: 8080
+
+database:
+  host: "192.168.200.130"
+  port: 3306
+  dbname: "gorm"
+  user: "root"
+  password: "root"
+  debug: true
+
+jwt:
+  secret_key: "your_secret_key"

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"blog_system/config"
 	"blog_system/models"
 	"fmt"
 	"gorm.io/driver/mysql"
@@ -10,16 +11,22 @@ import (
 var DB *gorm.DB // 全局共享的数据库连接实例
 
 func InitDB() {
-	// todo 连接信息配置化
-	dsn := "root:root@tcp(192.168.200.130:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True&loc=Local",
+		config.GlobalConfig.Database.User,
+		config.GlobalConfig.Database.Password,
+		config.GlobalConfig.Database.Host,
+		config.GlobalConfig.Database.Port,
+		config.GlobalConfig.Database.DBName,
+	)
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("数据库连接失败: %v", err))
 	}
 
-	// 开启Debug日志 todo 配置化
-	DB = DB.Debug()
+	if config.GlobalConfig.Database.Debug {
+		DB = DB.Debug()
+	}
 	DB.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{})
 }
 
