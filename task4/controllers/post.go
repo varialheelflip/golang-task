@@ -23,10 +23,7 @@ func (p *PostController) Create(c *gin.Context) {
 		return
 	}
 	post.UserID = util.GetHeaderUserId(c)
-	if err := db.DB.Create(&post).Error; err != nil {
-		response.Fail(c, "Failed to create post")
-		return
-	}
+	db.DB.Create(&post)
 	response.Success(c, post.ID)
 }
 

@@ -19,7 +19,18 @@ func (u *UserController) Register(c *gin.Context) {
 		response.Fail(c, err.Error())
 		return
 	}
-	// todo 用户/邮箱已存在校验
+	// 校验用户名/邮箱已存在
+	var judgeUsers []models.User
+	db.DB.Limit(1).Where("username = ?", user.Username).Find(&judgeUsers)
+	if len(judgeUsers) > 0 {
+		response.Fail(c, "用户名已被注册")
+		return
+	}
+	db.DB.Limit(1).Where("email = ?", user.Email).Find(&judgeUsers)
+	if len(judgeUsers) > 0 {
+		response.Fail(c, "邮箱已被注册")
+		return
+	}
 	// 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -28,10 +39,7 @@ func (u *UserController) Register(c *gin.Context) {
 	}
 	user.Password = string(hashedPassword)
 
-	if err := db.DB.Create(&user).Error; err != nil {
-		response.Fail(c, "Failed to create user")
-		return
-	}
+	db.DB.Create(&user)
 
 	response.Success(c, user.ID)
 }

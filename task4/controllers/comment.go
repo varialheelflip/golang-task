@@ -7,6 +7,7 @@ import (
 	"blog_system/pkg/util"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"time"
 )
 
 type CommentController struct{}
@@ -22,10 +23,7 @@ func (co *CommentController) Create(c *gin.Context) {
 		return
 	}
 	comment.UserID = util.GetHeaderUserId(c)
-	if err := db.DB.Create(&comment).Error; err != nil {
-		response.Fail(c, "Failed to create comment")
-		return
-	}
+	db.DB.Create(&comment)
 	response.Success(c, comment.ID)
 }
 
@@ -36,12 +34,9 @@ func (co *CommentController) List(c *gin.Context) {
 		return
 	}
 	var result []models.Comment
-	if err := db.DB.Where("post_id = ?", id).Preload("User", func(db *gorm.DB) *gorm.DB {
-		return db.Select("ID", "username")
-	}).Find(&result).Error; err != nil {
-		response.Fail(c, "系统异常")
-		return
-	}
+	db.DB.Where("post_id = ?", id).
+		Preload("User", func(db *gorm.DB) *gorm.DB { return db.Select("ID", "username") }).
+		Find(&result)
 	response.Success(c, buildCommentVo(result))
 }
 
@@ -55,9 +50,8 @@ func buildCommentVo(commentList []models.Comment) []commentVo {
 	var result []commentVo
 	for _, val := range commentList {
 		result = append(result, commentVo{
-			Content: val.Content,
-			// todo 时间格式化
-			CreatedAt: val.CreatedAt.String(),
+			Content:   val.Content,
+			CreatedAt: val.CreatedAt.Format(time.DateTime),
 			UserName:  val.User.Username,
 		})
 	}
