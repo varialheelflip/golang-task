@@ -3,10 +3,12 @@ package controllers
 import (
 	"blog_system/config"
 	"blog_system/db"
+	"blog_system/logger"
 	"blog_system/models"
 	"blog_system/pkg/response"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -78,5 +80,6 @@ func (u *UserController) Login(c *gin.Context) {
 		response.Fail(c, "Failed to generate token")
 		return
 	}
+	logger.LOGGER.Info("用户登录", zap.Any("userID", storedUser.ID))
 	response.Success(c, tokenString)
 }
